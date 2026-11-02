@@ -40,7 +40,11 @@ jobs:
       - name: Backfill selected historical prices
         continue-on-error: true
         run: |
-          python scripts/backfill.py
+          if [ ! -f data/backfill-status.json ]; then
+            python scripts/backfill.py
+          else
+            echo 'Backfill report exists; skip full historical refetch'
+          fi
       - name: Recalculate rankings from available history
         if: always()
         continue-on-error: true
