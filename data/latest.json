@@ -1,8 +1,8 @@
 {
   "version": "0.3",
-  "generated_at": "2026-11-02T07:27:29.877673+00:00",
+  "generated_at": "2026-11-02T07:29:59.018463+00:00",
   "latest_session": "2026-10-30",
-  "market_count": 7310,
+  "market_count": 7273,
   "catalog": [
     {
       "symbol": "00400A",
@@ -73107,8 +73107,8 @@
   ],
   "coverage": {
     "history_symbols": 7310,
-    "short_eligible": 0,
-    "swing_eligible": 0
+    "short_eligible": 37,
+    "swing_eligible": 37
   },
   "source_status": {
     "TWSE": {
