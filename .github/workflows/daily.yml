@@ -16,11 +16,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Backfill selected TWSE stocks (first run only)
+        run: |
+          if [ ! -f data/backfill-status.json ]; then
+            python scripts/backfill.py
+          else
+            echo 'Historical backfill already attempted; preserving existing data'
+          fi
       - name: Refresh official snapshots
         run: python scripts/update.py
       - name: Commit data changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/latest.json data/history.json
+          git add data/latest.json data/history.json data/backfill-status.json
           git diff --cached --quiet || (git commit -m "data: update daily close" && git push)
