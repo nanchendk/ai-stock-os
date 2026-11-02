@@ -59,10 +59,15 @@ def main():
  latest=max(r['date'] for rows in fetched.values() for r in rows)
  catalog=[dict(r) for rows in fetched.values() for r in rows if r['date']==latest]
  ranks={'short':[],'swing':[],'long':[]}
- for items in history.values():
-  if not items or items[-1]['date']!=latest:continue
-  if items[-1].get('asset_type')=='ETF' or str(items[-1].get('symbol','')).startswith('00'):continue
-  r=items[-1];closes=[x['close'] for x in items];n=len(closes)
+ for all_items in history.values():
+  # Monthly history can be newer than the official daily snapshot; score as-of the snapshot date.
+  items=[x for x in all_items if x.get('date') and x['date']<=latest and x.get('close') and x['close']>0]
+  if not items:continue
+  items.sort(key=lambda x:x['date'])
+  r=items[-1]
+  if (datetime.fromisoformat(latest)-datetime.fromisoformat(r['date'])).days>7:continue
+  if r.get('asset_type')=='ETF' or str(r.get('symbol','')).startswith(('00','01')):continue
+  closes=[x['close'] for x in items];n=len(closes)
   if n>=21 and len(set(x['date'] for x in items))>=21:
    mom5=closes[-1]/closes[-6]-1;mom20=closes[-1]/closes[-20]-1
    volumes=[x['volume'] for x in items[-20:] if x['volume'] is not None]
@@ -76,7 +81,7 @@ def main():
  for k in ranks:ranks[k]=sorted(ranks[k],key=lambda x:(-x['score'],x['symbol']))[:10]
  count=sum(1 for items in history.values() if items and items[-1]['date']==latest)
  output={'version':'0.3','generated_at':datetime.now(timezone.utc).isoformat(),'latest_session':latest,
- 'market_count':count,'catalog':catalog,'coverage':{'history_symbols':len(history),'short_eligible':sum(len(x)>=21 for x in history.values()),'swing_eligible':sum(len(x)>=60 for x in history.values())},'source_status':{k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},
+ 'market_count':count,'catalog':catalog,'coverage':{'history_symbols':len(history),'short_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=21 for x in history.values()),'swing_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=60 for x in history.values())},'source_status':{k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},
  'rankings':ranks,'status':{'short':'價格技術面試行版' if ranks['short'] else '歷史資料不足，尚未評分',
  'swing':'價格技術面試行版' if ranks['swing'] else '歷史資料不足，尚未評分',
  'long':'尚未取得財報及估值資料，不提供假評分'},
