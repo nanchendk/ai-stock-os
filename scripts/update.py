@@ -33,8 +33,8 @@ def parse(market,raw):
    name=str(r.get('CompanyName',r.get('SecuritiesCompanyName',r.get('SecuritiesName','')))).strip()
    close=num(r.get('Close'));volume=num(r.get('TradingShares'))
    day=date(r.get('Date'));change=num(r.get('Change',r.get('PriceChange')))
-  if re.fullmatch(r'\d{4}',code) and day and close and close>0:
-   result.append({'symbol':code,'name':name or code,'market':market,'date':day,'close':close,'volume':volume,'change':change})
+  if re.fullmatch(r'[0-9]{4,6}[A-Za-z]?',code) and day and close and close>0:
+   result.append({'symbol':code,'name':name or code,'asset_type':'ETF' if (code.startswith(('00','01')) and len(code)>=4) else 'STOCK','market':market,'date':day,'close':close,'volume':volume,'change':change})
  return result
 def scaled(v,lo,hi):return max(0,min(100,100*(v-lo)/(hi-lo)))
 def main():
