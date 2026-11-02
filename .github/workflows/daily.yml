@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -52,6 +54,18 @@ jobs:
           git add -A data/
           if ! git diff --cached --quiet; then
             git commit -m "data: publish historical rankings and daily market"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            # Data files are generated artifacts: regenerate against latest main on contention.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then exit 0; fi
+              echo "Concurrent data update detected; regenerating from current main (attempt $attempt)"
+              git fetch origin main
+              git reset --hard origin/main
+              python scripts/backfill.py
+              python scripts/update.py
+              git add -A data/
+              if git diff --cached --quiet; then exit 0; fi
+              git commit -m "data: publish refreshed official market data (retry $attempt)"
+            done
+            echo "Failed to publish after retries" >&2
+            exit 1
           fi
