@@ -11,7 +11,7 @@ SOURCES={
  'TPEx':'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes'
 }
 def fetch(url):
- req=urllib.request.Request(url,headers={'User-Agent':'AIStockOS/0.2','Accept':'application/json'})
+ req=urllib.request.Request(url,headers={'User-Agent':'AIStockOS/0.3','Accept':'application/json'})
  with urllib.request.urlopen(req,timeout=40) as response:return json.load(response)
 def num(x):
  try:return float(str(x).strip().replace(',',''))
