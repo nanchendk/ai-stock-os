@@ -96,9 +96,16 @@ def main():
    score=round(.45*trend+.55*sum(parts)/len(parts))
    ranks['long'].append(dict(r,score=score,observations=n,valuation=v,coverage='官方本益比、股價淨值比、殖利率與60日價格趨勢代理評分；尚未納入完整財報及產業差異'))
  for k in ranks:ranks[k]=sorted(ranks[k],key=lambda x:(-x['score'],x['symbol']))[:10]
+ market_rows=[r for r in catalog if r.get('asset_type')=='STOCK' and r.get('change') is not None]
+ adv=sum(1 for r in market_rows if r['change']>0)
+ dec=sum(1 for r in market_rows if r['change']<0)
+ flat=sum(1 for r in market_rows if r['change']==0)
+ active=[r for r in catalog if r.get('volume') is not None and r['volume']>0]
+ active.sort(key=lambda r:r['volume'],reverse=True)
+ heat={'session':latest,'scope':'TWSE / TPEx official daily close; share-volume ranking, not turnover value or social sentiment','advancers':adv,'decliners':dec,'unchanged':flat,'measured':len(market_rows),'advance_ratio':round(100*adv/(adv+dec),1) if adv+dec else None,'top_volume':active[:15],'change_coverage':round(100*len(market_rows)/len(catalog),1) if catalog else 0}
  count=sum(1 for items in history.values() if items and items[-1]['date']==latest)
  output={'version':'0.3','generated_at':datetime.now(timezone.utc).isoformat(),'latest_session':latest,
- 'market_count':count,'catalog':catalog,'coverage':{'history_symbols':len(history),'short_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=21 for x in history.values()),'swing_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=60 for x in history.values())},'source_status':dict({k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},VALUATION={'ok':bool(valuation),'count':len(valuation),'error':valuation_error}),
+ 'market_count':count,'catalog':catalog,'market_heat':heat,'coverage':{'history_symbols':len(history),'short_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=21 for x in history.values()),'swing_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=60 for x in history.values())},'source_status':dict({k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},VALUATION={'ok':bool(valuation),'count':len(valuation),'error':valuation_error}),
  'rankings':ranks,'status':{'short':'價格技術面試行版' if ranks['short'] else '歷史資料不足，尚未評分',
  'swing':'價格技術面試行版' if ranks['swing'] else '歷史資料不足，尚未評分',
  'long':'官方估值與價格趨勢代理研究（非完整基本面）' if ranks['long'] else '估值或歷史資料不足，尚未評分'},
