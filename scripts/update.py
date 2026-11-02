@@ -59,6 +59,14 @@ def main():
  latest=max(r['date'] for rows in fetched.values() for r in rows)
  catalog=[dict(r) for rows in fetched.values() for r in rows if r['date']==latest]
  ranks={'short':[],'swing':[],'long':[]}
+ valuation={};valuation_error=None
+ try:
+  for v in fetch('https://openapi.twse.com.tw/v1/exchangeReport/BWIBBU_ALL'):
+   code=str(v.get('Code','')).strip()
+   pe=num(v.get('PEratio'));pb=num(v.get('PBratio'));dy=num(v.get('DividendYield'))
+   if code and ((pe and pe>0) or (pb and pb>0) or (dy is not None and dy>=0)):
+    valuation[code]={'pe':pe,'pb':pb,'dividend_yield':dy}
+ except Exception as exc:valuation_error=str(exc)
  for all_items in history.values():
   # Monthly history can be newer than the official daily snapshot; score as-of the snapshot date.
   items=[x for x in all_items if x.get('date') and x['date']<=latest and x.get('close') and x['close']>0]
@@ -78,13 +86,22 @@ def main():
    m20=sum(closes[-20:])/20;m60=sum(closes[-60:])/60
    s=round(.5*scaled(closes[-1]/closes[-60]-1,-.25,.35)+.3*scaled(m20/m60-1,-.1,.1)+.2*scaled(closes[-1]/m20-1,-.1,.1))
    ranks['swing'].append(dict(r,score=s,observations=n,coverage='價格趨勢代理指標；尚未納入基本面及法人'))
+  v=valuation.get(r['symbol'])
+  if n>=60 and v and (v.get('pe') or v.get('pb')):
+   trend=scaled(closes[-1]/closes[-60]-1,-.3,.45)
+   parts=[]
+   if v.get('pe'):parts.append(100-scaled(v['pe'],5,55))
+   if v.get('pb'):parts.append(100-scaled(v['pb'],.5,8))
+   if v.get('dividend_yield') is not None:parts.append(scaled(v['dividend_yield'],0,8))
+   score=round(.45*trend+.55*sum(parts)/len(parts))
+   ranks['long'].append(dict(r,score=score,observations=n,valuation=v,coverage='官方本益比、股價淨值比、殖利率與60日價格趨勢代理評分；尚未納入完整財報及產業差異'))
  for k in ranks:ranks[k]=sorted(ranks[k],key=lambda x:(-x['score'],x['symbol']))[:10]
  count=sum(1 for items in history.values() if items and items[-1]['date']==latest)
  output={'version':'0.3','generated_at':datetime.now(timezone.utc).isoformat(),'latest_session':latest,
- 'market_count':count,'catalog':catalog,'coverage':{'history_symbols':len(history),'short_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=21 for x in history.values()),'swing_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=60 for x in history.values())},'source_status':{k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},
+ 'market_count':count,'catalog':catalog,'coverage':{'history_symbols':len(history),'short_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=21 for x in history.values()),'swing_eligible':sum(len([r for r in x if r.get('date','')<=latest])>=60 for x in history.values())},'source_status':dict({k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},VALUATION={'ok':bool(valuation),'count':len(valuation),'error':valuation_error}),
  'rankings':ranks,'status':{'short':'價格技術面試行版' if ranks['short'] else '歷史資料不足，尚未評分',
  'swing':'價格技術面試行版' if ranks['swing'] else '歷史資料不足，尚未評分',
- 'long':'尚未取得財報及估值資料，不提供假評分'},
+ 'long':'官方估值與價格趨勢代理研究（非完整基本面）' if ranks['long'] else '估值或歷史資料不足，尚未評分'},
  'buzz_status':'社群資料尚未授權串接，不發布熱門討論排行榜'}
  path.write_text(json.dumps(history,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
  (DATA/'latest.json').write_text(json.dumps(output,ensure_ascii=False,indent=2),encoding='utf-8')
