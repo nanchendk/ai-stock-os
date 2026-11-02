@@ -1,5 +1,10 @@
 name: AI Stock OS daily close
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/update.py'
+      - 'scripts/backfill.py'
   workflow_dispatch:
   schedule:
     - cron: '30 10 * * 1-5'
