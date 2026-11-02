@@ -1,0 +1,29 @@
+{
+  "version": "0.2",
+  "generated_at": "2026-11-02T03:36:30.250507+00:00",
+  "latest_session": "2026-10-30",
+  "market_count": 1969,
+  "source_status": {
+    "TWSE": {
+      "ok": true,
+      "count": 1095,
+      "error": null
+    },
+    "TPEx": {
+      "ok": true,
+      "count": 874,
+      "error": null
+    }
+  },
+  "rankings": {
+    "short": [],
+    "swing": [],
+    "long": []
+  },
+  "status": {
+    "short": "歷史資料不足，尚未評分",
+    "swing": "歷史資料不足，尚未評分",
+    "long": "尚未取得財報及估值資料，不提供假評分"
+  },
+  "buzz_status": "社群資料尚未授權串接，不發布熱門討論排行榜"
+}
