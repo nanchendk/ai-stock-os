@@ -57,11 +57,12 @@ def main():
    items.append(r);items.sort(key=lambda x:x['date'])
    history[key]=items[-270:]
  latest=max(r['date'] for rows in fetched.values() for r in rows)
+ catalog=[dict(r) for rows in fetched.values() for r in rows if r['date']==latest]
  ranks={'short':[],'swing':[],'long':[]}
  for items in history.values():
   if not items or items[-1]['date']!=latest:continue
   r=items[-1];closes=[x['close'] for x in items];n=len(closes)
-  if n>=20:
+  if n>=21:
    mom5=closes[-1]/closes[-6]-1;mom20=closes[-1]/closes[-20]-1
    volumes=[x['volume'] for x in items[-20:] if x['volume'] is not None]
    ratio=r['volume']/(sum(volumes)/len(volumes)) if volumes and r['volume'] is not None and sum(volumes)>0 else 1
@@ -73,8 +74,8 @@ def main():
    ranks['swing'].append(dict(r,score=s,observations=n,coverage='價格趨勢代理指標；尚未納入基本面及法人'))
  for k in ranks:ranks[k]=sorted(ranks[k],key=lambda x:(-x['score'],x['symbol']))[:10]
  count=sum(1 for items in history.values() if items and items[-1]['date']==latest)
- output={'version':'0.2','generated_at':datetime.now(timezone.utc).isoformat(),'latest_session':latest,
- 'market_count':count,'source_status':{k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},
+ output={'version':'0.3','generated_at':datetime.now(timezone.utc).isoformat(),'latest_session':latest,
+ 'market_count':count,'catalog':catalog,'source_status':{k:{'ok':k in fetched,'count':len(fetched.get(k,[])),'error':errors.get(k)} for k in SOURCES},
  'rankings':ranks,'status':{'short':'價格技術面試行版' if ranks['short'] else '歷史資料不足，尚未評分',
  'swing':'價格技術面試行版' if ranks['swing'] else '歷史資料不足，尚未評分',
  'long':'尚未取得財報及估值資料，不提供假評分'},
