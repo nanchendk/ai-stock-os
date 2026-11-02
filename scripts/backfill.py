@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Conservative historical backfill for selected TWSE tickers only.
+"""Historical backfill for selected TWSE equities and ETFs.
 Official monthly STOCK_DAY endpoint. Failures are reported; never synthesize prices.
 """
 import json, time, urllib.parse, urllib.request, calendar, os
@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/'data'
 HISTORY=DATA/'history.json'
-TICKERS=['2330','2317','2454','2308','2303','2881','2882','2884','2891','2886','2603','2609','2615','2382','3231','3711','2376','2357','2327','3034','3008','6669','6505','1301','1303','2002','2408','2412','5871','5880']
+TICKERS=['00878','009816','00981A','0050','0056','00919','00929','2330','2317','2454','2308','2303','2881','2882','2884','2891','2886','2603','2609','2615','2382','3231','3711','2376','2357','2327','3034','3008','6669','6505','1301','1303','2002','2408','2412','5871','5880']
 def months(n=5):
  now=datetime.now(timezone.utc);y,m=now.year,now.month
  for _ in range(n):
@@ -38,7 +38,7 @@ def run():
     for row in payload['data']:
      if len(row)<7:continue
      d=roc(row[0]);close=number(row[6]);volume=number(row[1])
-     if d and close and close>0:existing[d]={'symbol':symbol,'name':name,'market':'TWSE','date':d,'close':close,'volume':volume,'change':None}
+     if d and close and close>0:existing[d]={'symbol':symbol,'name':name,'market':'TWSE','asset_type':'ETF' if symbol.startswith('00') else 'STOCK','date':d,'close':close,'volume':volume,'change':None}
     report['success']+=1
    except Exception as e:report['failed'].append({'symbol':symbol,'month':month,'error':str(e)[:180]})
    time.sleep(0.8)
