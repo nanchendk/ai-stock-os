@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Daily official TWSE/TPEx snapshots; do not fabricate missing rankings."""
+"""Daily official TWSE/TPEx snapshots, including ETF symbol formats; do not fabricate missing rankings."""
 import json, re, urllib.request
 from pathlib import Path
 from datetime import datetime, timezone
